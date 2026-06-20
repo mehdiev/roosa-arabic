@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Roosa's Arabic</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <span class="ar">روسا</span> Roosa's Arabic
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-page="home">🏠 Home</button>
+    <button class="nav-tab" data-page="vocab">📚 Vocab</button>
+    <button class="nav-tab" data-page="flashcards">🃏 Flashcards</button>
+    <button class="nav-tab" data-page="speak">💬 Speak</button>
+    <button class="nav-tab" data-page="quiz">🎯 Quiz</button>
+  </div>
+</nav>
+
+<!-- ═══ HOME ═══ -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <h1>مرحباً يا روسا 👋</h1>
+    <p>Your personal Arabic learning space — 1000+ words, Finnish translations, real conversations, and daily practice.</p>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="num" id="stat-learned">0</div><div class="lbl">Cards practiced</div></div>
+    <div class="stat-card"><div class="num" id="stat-correct">0</div><div class="lbl">Quiz correct</div></div>
+    <div class="stat-card"><div class="num" id="stat-streak">0</div><div class="lbl">Day streak 🔥</div></div>
+  </div>
+  <div class="section-title">Jump in 👇</div>
+  <div class="home-grid">
+    <div class="home-card" data-goto="vocab">
+      <div class="home-icon">📚</div>
+      <div><h3>Vocabulary</h3><p>1000+ words with Finnish</p></div>
+    </div>
+    <div class="home-card" data-goto="vocab">
+      <div class="home-icon">🔤</div>
+      <div><h3>Alphabet</h3><p>28 Arabic letters</p></div>
+    </div>
+    <div class="home-card" data-goto="flashcards">
+      <div class="home-icon">🃏</div>
+      <div><h3>Flashcards</h3><p>Flip &amp; learn by category</p></div>
+    </div>
+    <div class="home-card" data-goto="speak">
+      <div class="home-icon">💬</div>
+      <div><h3>Conversations</h3><p>24 daily dialogues</p></div>
+    </div>
+    <div class="home-card" data-goto="speak">
+      <div class="home-icon">🧩</div>
+      <div><h3>Word Order</h3><p>100 scramble sentences</p></div>
+    </div>
+    <div class="home-card" data-goto="quiz">
+      <div class="home-icon">🎯</div>
+      <div><h3>Quiz</h3><p>100 random questions</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ VOCAB ═══ -->
+<div class="page" id="page-vocab">
+  <div style="display:flex;gap:8px;margin-bottom:16px">
+    <button class="tab-pill vtab-pill active" data-t="words">📝 Words</button>
+    <button class="tab-pill vtab-pill" data-t="alpha">🔤 Alphabet</button>
+  </div>
+
+  <!-- words panel -->
+  <div id="vocab-words-panel">
+    <div class="card-box">
+      <div class="progress-bar-wrap"><div class="progress-bar" id="vocab-prog" style="width:5%"></div></div>
+      <div id="vocab-cats" class="tab-row" style="overflow-x:auto;flex-wrap:wrap"></div>
+      <div style="font-size:12px;color:var(--g500);margin-bottom:10px" id="vocab-info"></div>
+      <div style="overflow-x:auto">
+        <table class="vocab-table">
+          <thead><tr>
+            <th>Arabic</th><th>English</th><th>Finnish</th><th>Pronunciation</th><th></th>
+          </tr></thead>
+          <tbody id="vocab-tbody"></tbody>
+        </table>
+      </div>
+      <div class="tab-row" id="vocab-pag" style="margin-top:16px;justify-content:center"></div>
+    </div>
+  </div>
+
+  <!-- alphabet panel -->
+  <div id="vocab-alpha-panel" style="display:none">
+    <div class="card-box">
+      <h2>Arabic Alphabet</h2>
+      <p class="subtitle">Click a letter to hear it 🔊</p>
+      <div class="alphabet-grid" id="alpha-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FLASHCARDS ═══ -->
+<div class="page" id="page-flashcards">
+  <div class="card-box">
+    <div class="fc-controls">
+      <select class="fc-select" id="fc-cat-sel"></select>
+      <span id="fc-counter" style="font-size:13px;color:var(--g500)"></span>
+      <span id="fc-score" style="font-size:13px;color:var(--green);font-weight:600"></span>
+    </div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="fc-prog" style="width:0%"></div></div>
+
+    <div id="fc-card-wrap">
+      <div class="flashcard-scene" onclick="flipCard()">
+        <div class="flashcard" id="fc-card">
+          <div class="flashcard-face flashcard-front">
+            <div class="ar-word" id="fc-ar">مرحبا</div>
+            <div class="hint">Tap to reveal →</div>
+          </div>
+          <div class="flashcard-face flashcard-back">
+            <div class="en-word" id="fc-en"></div>
+            <div class="fi-word" id="fc-fi"></div>
+            <div class="tr-word" id="fc-tr"></div>
+            <div class="cat-word" id="fc-cat"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fc-actions">
+        <button class="fc-btn wrong" onclick="markCard(false)">✗ Again</button>
+        <button class="fc-speak" onclick="speakCurrent()">🔊</button>
+        <button class="fc-btn right" onclick="markCard(true)">✓ Got it</button>
+      </div>
+      <div class="fc-tip">Tap the card to flip · Then mark yourself</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SPEAK ═══ -->
+<div class="page" id="page-speak">
+  <div class="tab-row" style="margin-bottom:20px">
+    <button class="tab-pill stab-pill active" data-t="conv">💬 Conversations</button>
+    <button class="tab-pill stab-pill" data-t="patt">📐 Patterns</button>
+    <button class="tab-pill stab-pill" data-t="scram">🧩 Word Order</button>
+  </div>
+
+  <!-- Conversations -->
+  <div id="speak-conv">
+    <div class="card-box">
+      <h2>Daily Conversations</h2>
+      <p class="subtitle">24 real-life dialogues in Arabic, English &amp; Finnish</p>
+      <div id="conv-tabs" class="tab-row" style="overflow-x:auto;flex-wrap:wrap"></div>
+      <div id="conv-body"></div>
+    </div>
+  </div>
+
+  <!-- Patterns -->
+  <div id="speak-patt" style="display:none">
+    <div class="card-box">
+      <h2>Sentence Patterns</h2>
+      <p class="subtitle">20 essential Arabic structures with Finnish</p>
+      <div id="patt-body"></div>
+    </div>
+  </div>
+
+  <!-- Scramble -->
+  <div id="speak-scram" style="display:none">
+    <div class="card-box">
+      <h2>Word Order Practice</h2>
+      <p class="subtitle">Put the Arabic words in the right order</p>
+      <div id="scr-body">
+        <div class="sc-score" id="scr-score"></div>
+        <div class="sc-en" id="scr-en"></div>
+        <div class="sc-fi" id="scr-fi"></div>
+        <div class="sc-answer" id="scr-answer"></div>
+        <div class="word-bank" id="scr-bank"></div>
+        <div class="sc-actions">
+          <button class="sc-btn check" onclick="checkScramble()">Check ✓</button>
+          <button class="sc-btn clear" onclick="clearAnswer()">Clear</button>
+          <button class="sc-btn skip" onclick="skipScramble()">Skip →</button>
+        </div>
+        <div class="sc-feedback" id="scr-feedback"></div>
+        <div style="font-size:11px;color:var(--g400);margin-top:10px" id="scr-note"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ QUIZ ═══ -->
+<div class="page" id="page-quiz">
+  <div class="card-box">
+    <h2>Quiz</h2>
+    <p class="subtitle">100 random questions drawn from the full word bank</p>
+
+    <div class="quiz-modes" id="quiz-modes"></div>
+
+    <div class="quiz-hdr">
+      <div>Question <span id="quiz-counter">1</span> / <span id="quiz-total">100</span></div>
+      <div>✓ <span id="quiz-score">0</span> correct</div>
+    </div>
+
+    <div id="quiz-q-wrap">
+      <div class="quiz-q">
+        <div class="quiz-qlbl" id="quiz-qlbl">ar→en</div>
+        <div class="quiz-prompt" id="quiz-prompt">مرحبا</div>
+        <div class="quiz-tr" id="quiz-tr"></div>
+        <div class="quiz-opts" id="quiz-opts"></div>
+        <div class="quiz-fb" id="quiz-fb"></div>
+        <button class="quiz-next" id="quiz-next" onclick="nextQuestion()">Next →</button>
+      </div>
+    </div>
+
+    <div id="quiz-done-screen" style="display:none" class="quiz-done">
+      <div class="pct" id="quiz-pct">0%</div>
+      <h2 id="quiz-done-msg">Well done!</h2>
+      <p id="quiz-done-sub"></p>
+      <button class="quiz-restart" onclick="startQuiz()">New round 🔄</button>
+    </div>
+  </div>
+</div>
+
+<!-- DATA (order matters) -->
+<script src="data/words.js"></script>
+<script src="data/conversations.js"></script>
+<script src="data/scramble.js"></script>
+<script src="data/patterns.js"></script>
+<script src="app.js"></script>
+
+<script>
+// wire up alphabet tab pills
+document.querySelectorAll('.vtab-pill').forEach(function(p){
+  p.addEventListener('click', function(){ setVocabTab(p.dataset.t); });
+});
+// wire up speak sub-tab pills
+document.querySelectorAll('.stab-pill').forEach(function(p){
+  p.addEventListener('click', function(){ setSpeakTab(p.dataset.t); });
+});
+</script>
+</body>
+</html>
