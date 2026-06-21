@@ -445,8 +445,8 @@ const QUIZ_MODES = ['ar→en','ar→fi','en→ar','fi→ar'];
 let qMode = 'ar→en', qPool = [], qIndex = 0, qCorrect = 0, qAnswered = false;
 
 function initQuiz(){
-  if(!document.getElementById('quiz-inited').value){
-    document.getElementById('quiz-inited').value='1';
+  if(!window.quizInited){
+    window.quizInited = true;
     renderQuizModes();
   }
   startQuiz();
