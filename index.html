@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Roosa's Arabic</title>
+<meta name="description" content="An English-first Arabic learning app with adaptive neural review, pronunciation feedback, 900+ vocabulary entries, conversations, and quizzes.">
 <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -15,11 +16,12 @@
     <span class="ar">روسا</span> Roosa's Arabic
   </div>
   <div class="nav-tabs">
-    <button class="nav-tab active" data-page="home">🏠 Home</button>
-    <button class="nav-tab" data-page="vocab">📚 Vocab</button>
-    <button class="nav-tab" data-page="flashcards">🃏 Flashcards</button>
-    <button class="nav-tab" data-page="speak">💬 Speak</button>
-    <button class="nav-tab" data-page="quiz">🎯 Quiz</button>
+    <button class="nav-tab active" data-page="home" aria-label="Home"><span class="nav-icon" aria-hidden="true">🏠</span><span class="nav-label">Home</span></button>
+    <button class="nav-tab" data-page="vocab" aria-label="Vocabulary"><span class="nav-icon" aria-hidden="true">📚</span><span class="nav-label">Vocab</span></button>
+    <button class="nav-tab" data-page="flashcards" aria-label="Flashcards"><span class="nav-icon" aria-hidden="true">🃏</span><span class="nav-label">Flashcards</span></button>
+    <button class="nav-tab" data-page="speak" aria-label="Speaking practice"><span class="nav-icon" aria-hidden="true">💬</span><span class="nav-label">Speak</span></button>
+    <button class="nav-tab" data-page="quiz" aria-label="Quiz"><span class="nav-icon" aria-hidden="true">🎯</span><span class="nav-label">Quiz</span></button>
+    <button class="nav-tab" data-page="smart" aria-label="AI Study Lab"><span class="nav-icon" aria-hidden="true">✦</span><span class="nav-label">AI Lab</span></button>
   </div>
 </nav>
 
@@ -27,7 +29,7 @@
 <div class="page active" id="page-home">
   <div class="hero">
     <h1>مرحباً يا روسا 👋</h1>
-    <p>Your personal Arabic learning space — 1000+ words, Finnish translations, real conversations, and daily practice.</p>
+    <p>An English-first Arabic learning space with 900+ words, real conversations, and adaptive daily practice.</p>
   </div>
   <div class="stats-row">
     <div class="stat-card"><div class="num" id="stat-learned">0</div><div class="lbl">Cards practiced</div></div>
@@ -38,7 +40,7 @@
   <div class="home-grid">
     <div class="home-card" data-goto="vocab">
       <div class="home-icon">📚</div>
-      <div><h3>Vocabulary</h3><p>1000+ words with Finnish</p></div>
+      <div><h3>Vocabulary</h3><p>900+ Arabic–English words</p></div>
     </div>
     <div class="home-card" data-goto="vocab">
       <div class="home-icon">🔤</div>
@@ -50,7 +52,7 @@
     </div>
     <div class="home-card" data-goto="speak">
       <div class="home-icon">💬</div>
-      <div><h3>Conversations</h3><p>24 daily dialogues</p></div>
+      <div><h3>Conversations</h3><p>25 daily dialogues</p></div>
     </div>
     <div class="home-card" data-goto="speak">
       <div class="home-icon">🧩</div>
@@ -59,6 +61,10 @@
     <div class="home-card" data-goto="quiz">
       <div class="home-icon">🎯</div>
       <div><h3>Quiz</h3><p>100 random questions</p></div>
+    </div>
+    <div class="home-card smart-home-card" data-goto="smart">
+      <div class="home-icon">✦</div>
+      <div><h3>AI Study Lab</h3><p>Neural recall + speech coach</p></div>
     </div>
   </div>
 </div>
@@ -79,7 +85,7 @@
       <div style="overflow-x:auto">
         <table class="vocab-table">
           <thead><tr>
-            <th>Arabic</th><th>English</th><th>Finnish</th><th>Pronunciation</th><th></th>
+            <th>Arabic</th><th>English</th><th>Pronunciation</th><th></th>
           </tr></thead>
           <tbody id="vocab-tbody"></tbody>
         </table>
@@ -117,7 +123,6 @@
           </div>
           <div class="flashcard-face flashcard-back">
             <div class="en-word" id="fc-en"></div>
-            <div class="fi-word" id="fc-fi"></div>
             <div class="tr-word" id="fc-tr"></div>
             <div class="cat-word" id="fc-cat"></div>
           </div>
@@ -146,7 +151,7 @@
   <div id="speak-conv">
     <div class="card-box">
       <h2>Daily Conversations</h2>
-      <p class="subtitle">24 real-life dialogues in Arabic, English &amp; Finnish</p>
+      <p class="subtitle">25 real-life dialogues in Arabic and English</p>
       <div id="conv-tabs" class="tab-row" style="overflow-x:auto;flex-wrap:wrap"></div>
       <div id="conv-body"></div>
     </div>
@@ -156,7 +161,7 @@
   <div id="speak-patt" style="display:none">
     <div class="card-box">
       <h2>Sentence Patterns</h2>
-      <p class="subtitle">20 essential Arabic structures with Finnish</p>
+      <p class="subtitle">20 essential Arabic structures explained in English</p>
       <div id="patt-body"></div>
     </div>
   </div>
@@ -169,7 +174,6 @@
       <div id="scr-body">
         <div class="sc-score" id="scr-score"></div>
         <div class="sc-en" id="scr-en"></div>
-        <div class="sc-fi" id="scr-fi"></div>
         <div class="sc-answer" id="scr-answer"></div>
         <div class="word-bank" id="scr-bank"></div>
         <div class="sc-actions">
@@ -182,6 +186,97 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- ═══ AI STUDY LAB ═══ -->
+<div class="page" id="page-smart">
+  <section class="smart-hero">
+    <div>
+      <div class="eyebrow">LOCAL MODEL · ON-DEVICE · ADAPTIVE</div>
+      <h1>AI Study Lab <span aria-hidden="true">✦</span></h1>
+      <p>A tiny neural network learns from your practice, estimates what you are likely to forget, and builds the next review locally in your browser.</p>
+    </div>
+    <div class="model-status" id="model-status"><span class="status-dot"></span> Calibrating</div>
+  </section>
+
+  <div class="model-metrics" aria-label="Adaptive learning metrics">
+    <article class="metric-card">
+      <span class="metric-label">Predicted recall</span>
+      <strong id="ml-recall">—</strong>
+      <span class="metric-note">across reviewed words</span>
+    </article>
+    <article class="metric-card">
+      <span class="metric-label">Learning signals</span>
+      <strong id="ml-signals">0</strong>
+      <span class="metric-note">used for local training</span>
+    </article>
+    <article class="metric-card">
+      <span class="metric-label">Due for review</span>
+      <strong id="ml-due">0</strong>
+      <span class="metric-note">scheduled by mastery</span>
+    </article>
+    <article class="metric-card">
+      <span class="metric-label">Model confidence</span>
+      <strong id="ml-confidence">Low</strong>
+      <span class="metric-note">improves with practice</span>
+    </article>
+  </div>
+
+  <div class="smart-layout">
+    <section class="card-box review-panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">ADAPTIVE REVIEW</span>
+          <h2>Your next best word</h2>
+        </div>
+        <button class="icon-button" type="button" onclick="speakSmartWord()" aria-label="Hear the current Arabic word">🔊</button>
+      </div>
+
+      <div class="selection-reason" id="smart-reason">Building your first recommendation…</div>
+      <div class="smart-card" id="smart-card">
+        <div class="smart-ar" id="smart-ar" lang="ar" dir="rtl">مرحباً</div>
+        <div class="smart-tr" id="smart-tr">marhaban</div>
+        <button class="reveal-button" id="smart-reveal" type="button" onclick="revealSmartAnswer()">Reveal meaning</button>
+        <div class="smart-answer" id="smart-answer" aria-live="polite"></div>
+      </div>
+
+      <div class="review-actions" id="smart-actions" aria-label="Rate this recall">
+        <button type="button" class="rating again" onclick="rateSmartWord(0)"><strong>Again</strong><span>&lt; 1 min</span></button>
+        <button type="button" class="rating hard" onclick="rateSmartWord(1)"><strong>Hard</strong><span>short interval</span></button>
+        <button type="button" class="rating good" onclick="rateSmartWord(2)"><strong>Good</strong><span>normal interval</span></button>
+        <button type="button" class="rating easy" onclick="rateSmartWord(3)"><strong>Easy</strong><span>long interval</span></button>
+      </div>
+      <p class="review-hint">Reveal the answer, then rate your recall. Every rating trains the model and updates the schedule.</p>
+    </section>
+
+    <aside class="card-box speech-panel">
+      <span class="eyebrow">ML PRONUNCIATION COACH</span>
+      <h2>Say it in Arabic</h2>
+      <p class="subtitle">Your browser transcribes your voice; the app compares the result locally with the target and stores no recording.</p>
+      <div class="speech-target">
+        <span>Target</span>
+        <strong id="speech-target" lang="ar" dir="rtl">مرحباً</strong>
+      </div>
+      <button class="record-button" id="record-button" type="button" onclick="startPronunciationCheck()">
+        <span class="record-icon">●</span>
+        <span id="record-label">Start pronunciation check</span>
+      </button>
+      <div class="speech-result" id="speech-result" aria-live="polite">
+        <span class="speech-score">—</span>
+        <p>Speech feedback will appear here.</p>
+      </div>
+    </aside>
+  </div>
+
+  <details class="model-details">
+    <summary>How the adaptive model works</summary>
+    <div class="model-detail-grid">
+      <div><strong>1. Features</strong><span>Attempts, accuracy, response speed, time since review, lapses, and word difficulty.</span></div>
+      <div><strong>2. Neural prediction</strong><span>A 6 → 8 → 4 → 1 network trains online after every answer to estimate recall probability.</span></div>
+      <div><strong>3. Recommendation</strong><span>Low predicted recall, overdue items, and a little exploration determine what appears next.</span></div>
+      <div><strong>4. Privacy</strong><span>Learning history and weights remain in local storage. Speech recognition is handled by your browser.</span></div>
+    </div>
+  </details>
 </div>
 
 <!-- ═══ QUIZ ═══ -->
@@ -222,6 +317,7 @@
 <script src="data/conversations.js"></script>
 <script src="data/scramble.js"></script>
 <script src="data/patterns.js"></script>
+<script src="ml-engine.js"></script>
 <script src="app.js"></script>
 
 <script>

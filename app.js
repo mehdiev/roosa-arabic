@@ -17,6 +17,7 @@ const ALPHABET = [
 /* ── STATE ── */
 let stats = JSON.parse(localStorage.getItem('roosa_stats') || '{"learned":0,"correct":0,"streak":0,"lastDate":""}');
 function saveStats(){ localStorage.setItem('roosa_stats', JSON.stringify(stats)); }
+const adaptiveModel = new window.AdaptiveLearningEngine();
 
 /* ── RIPPLE ── */
 function addRipple(el, e){
@@ -75,7 +76,9 @@ function updateStreak(){
 updateStreak();
 
 /* ── NAVIGATION ── */
-function showPage(id){
+const PAGE_IDS = ['home','vocab','flashcards','speak','quiz','smart'];
+function showPage(id, updateHash=true){
+  if(!PAGE_IDS.includes(id)) id = 'home';
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
@@ -85,9 +88,12 @@ function showPage(id){
   if(id==='flashcards') initFlashcards();
   if(id==='speak') initSpeak();
   if(id==='quiz') initQuiz();
+  if(id==='smart') initSmartLab();
+  if(updateHash) history.replaceState(null, '', `#${id}`);
 }
 document.querySelectorAll('.nav-tab').forEach(t=>t.addEventListener('click',()=>showPage(t.dataset.page)));
 document.querySelectorAll('.home-card[data-goto]').forEach(c=>c.addEventListener('click',()=>showPage(c.dataset.goto)));
+window.addEventListener('hashchange', ()=>showPage(location.hash.slice(1), false));
 
 /* ── HOME ── */
 function renderHome(){
@@ -140,15 +146,13 @@ function renderVocabTable(){
     rows += `<tr>
       <td class="ar">${w.ar}</td>
       <td>${w.en}</td>
-      <td class="fi-col">${w.fi}</td>
       <td class="tr-col">${w.tr||''}</td>
       <td><span class="speak-icon" onclick="speak('${w.ar.replace(/'/g,"\\'")}')">🔊</span></td>
     </tr>`;
     if(hasEx){
-      rows += `<tr class="ex-row"><td colspan="5"><div class="ex-bubble">
+      rows += `<tr class="ex-row"><td colspan="4"><div class="ex-bubble">
         <span class="ex-ar">${w.ex.ar}</span>
-        <span class="ex-en">${w.ex.en}</span><br>
-        <span class="ex-fi">${w.ex.fi}</span>
+        <span class="ex-en">${w.ex.en}</span>
       </div></td></tr>`;
     }
   });
@@ -196,7 +200,7 @@ function playLetter(el, ar){
 /* ══════════════════════════════════════════════════════
    FLASHCARDS PAGE
 ══════════════════════════════════════════════════════ */
-let fcWords = [], fcIndex = 0, fcFlipped = false, fcCorrect = 0, fcTotal = 0;
+let fcWords = [], fcIndex = 0, fcFlipped = false, fcCorrect = 0, fcTotal = 0, fcShownAt = 0;
 
 function initFlashcards(){
   const sel = document.getElementById('fc-cat-sel');
@@ -224,7 +228,6 @@ function renderFlashcard(){
   const w = fcWords[fcIndex];
   document.getElementById('fc-ar').textContent = w.ar;
   document.getElementById('fc-en').textContent = w.en;
-  document.getElementById('fc-fi').textContent = w.fi;
   document.getElementById('fc-tr').textContent = w.tr||'';
   document.getElementById('fc-cat').textContent = w.cat;
   const prog = fcTotal > 0 ? (fcIndex/fcWords.length)*100 : 0;
@@ -236,6 +239,7 @@ function renderFlashcard(){
   card.classList.remove('flipped','new-card');
   void card.offsetWidth; // reflow
   card.classList.add('new-card');
+  fcShownAt = Date.now();
 }
 
 function flipCard(){
@@ -245,6 +249,7 @@ function flipCard(){
 
 function markCard(correct){
   if(!fcFlipped){ flipCard(); return; }
+  adaptiveModel.record(fcWords[fcIndex], correct ? 2 : 0, Date.now() - fcShownAt);
   if(correct){ fcCorrect++; stats.correct++; saveStats(); }
   stats.learned = Math.max(stats.learned, fcIndex+1);
   saveStats();
@@ -256,13 +261,11 @@ function markCard(correct){
 
 function showFcDone(){
   const pct = Math.round(fcCorrect/fcWords.length*100);
-  document.getElementById('fc-card-wrap').innerHTML = `
-    <div style="text-align:center;padding:32px">
-      <div style="font-size:54px;font-weight:800;color:var(--rose)">${pct}%</div>
-      <div style="font-size:18px;font-weight:700;margin:8px 0">Great job!</div>
-      <div style="color:var(--g500);font-size:14px;margin-bottom:18px">${fcCorrect}/${fcWords.length} correct</div>
-      <button onclick="shuffleFlashcards()" style="padding:9px 24px;background:var(--rose);color:white;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer">Again 🔄</button>
-    </div>`;
+  document.getElementById('fc-score').textContent = `Round complete · ${pct}%`;
+  if(pct >= 60) confetti();
+  fcWords = shuffle(fcWords);
+  fcIndex = 0; fcCorrect = 0; fcTotal = 0;
+  setTimeout(renderFlashcard, 900);
 }
 
 function speakCurrent(){
@@ -290,7 +293,7 @@ function setSpeakTab(t){
   });
   if(t==='conv') renderConv();
   if(t==='patt') renderPatterns();
-  if(t==='scram') renderScramble();
+  if(t==='scram') scrPool.length ? renderScramble() : initScramble();
 }
 
 /* ── CONVERSATIONS ── */
@@ -313,7 +316,6 @@ function renderConv(){
           <span class="b-ar">${ln.ar}</span>
           <span class="b-tr">${ln.tr}</span>
           <span class="b-en">${ln.en}</span>
-          <span class="b-fi">${ln.fi}</span>
         </div>
       </div>
       <span class="b-spk" onclick="speak('${ln.ar.replace(/'/g,"\\'")}')">🔊</span>
@@ -336,7 +338,6 @@ function renderPatterns(){
         ${p.examples.map(e=>`<div class="pex">
           <span class="p-ar">${e.ar}</span>
           <span class="p-en">${e.en}</span>
-          <span class="p-fi">${e.fi}</span>
           <span class="speak-icon" onclick="speak('${e.ar.replace(/'/g,"\\'")}')">🔊</span>
         </div>`).join('')}
       </div>
@@ -366,7 +367,6 @@ function renderScramble(){
   const s = scrPool[scrIndex];
   document.getElementById('scr-score').innerHTML = `Sentence <span>${scrIndex+1}</span>/${scrPool.length} · Correct: <span>${scrCorrectCount}</span>`;
   document.getElementById('scr-en').textContent = s.en;
-  document.getElementById('scr-fi').textContent = s.fi;
   document.getElementById('scr-note').textContent = s.note || '';
   document.getElementById('scr-feedback').className = 'sc-feedback';
   document.getElementById('scr-feedback').textContent = '';
@@ -441,8 +441,9 @@ function showScrDone(){
 /* ══════════════════════════════════════════════════════
    QUIZ PAGE
 ══════════════════════════════════════════════════════ */
-const QUIZ_MODES = ['ar→en','ar→fi','en→ar','fi→ar'];
+const QUIZ_MODES = ['ar→en','en→ar'];
 let qMode = 'ar→en', qPool = [], qIndex = 0, qCorrect = 0, qAnswered = false;
+let qShownAt = 0;
 
 function initQuiz(){
   if(!window.quizInited){
@@ -488,6 +489,7 @@ function showQuestion(){
   pEl.textContent = prompt;
   pEl.className = isAr ? 'quiz-prompt' : 'quiz-prompt en';
   document.getElementById('quiz-tr').textContent = isAr ? (w.tr||'') : '';
+  qShownAt = Date.now();
 
   document.getElementById('quiz-opts').innerHTML = opts.map(o=>
     `<button class="qopt ${o.ar?'ar-opt':''}" onclick="pickAnswer(this,'${escQ(o.val)}','${escQ(w[o.answerKey])}')">${o.label}</button>`
@@ -504,15 +506,9 @@ function buildQuestion(w){
   if(qMode==='ar→en'){
     const opts = shuffle([w,...dist]).map(x=>({label:x.en,val:x.en,answerKey:'en'}));
     return [w.ar, opts, true];
-  } else if(qMode==='ar→fi'){
-    const opts = shuffle([w,...dist]).map(x=>({label:x.fi,val:x.fi,answerKey:'fi'}));
-    return [w.ar, opts, true];
-  } else if(qMode==='en→ar'){
+  } else {
     const opts = shuffle([w,...dist]).map(x=>({label:x.ar,val:x.ar,answerKey:'ar',ar:true}));
     return [w.en, opts, false];
-  } else { // fi→ar
-    const opts = shuffle([w,...dist]).map(x=>({label:x.ar,val:x.ar,answerKey:'ar',ar:true}));
-    return [w.fi, opts, false];
   }
 }
 
@@ -520,6 +516,7 @@ function pickAnswer(btn, val, correctVal){
   if(qAnswered) return;
   qAnswered = true;
   const correct = val === correctVal;
+  adaptiveModel.record(qPool[qIndex], correct ? 2 : 0, Date.now() - qShownAt);
   if(correct){ qCorrect++; stats.correct++; saveStats();
     const sc = document.getElementById('quiz-score');
     sc.textContent = qCorrect;
@@ -536,8 +533,8 @@ function pickAnswer(btn, val, correctVal){
   const w = qPool[qIndex];
   fb.className = `quiz-fb show ${correct?'ok':'err'}`;
   fb.innerHTML = correct
-    ? `✓ Correct! &nbsp;<span style="font-family:'Amiri',serif;font-size:18px">${w.ar}</span> = ${w.en} (${w.fi})`
-    : `✗ <span style="font-family:'Amiri',serif;font-size:18px">${w.ar}</span> = ${w.en} (${w.fi})`;
+    ? `✓ Correct! &nbsp;<span style="font-family:'Amiri',serif;font-size:18px">${w.ar}</span> = ${w.en}`
+    : `✗ <span style="font-family:'Amiri',serif;font-size:18px">${w.ar}</span> = ${w.en}`;
   document.getElementById('quiz-next').className = 'quiz-next show';
 }
 
@@ -550,9 +547,169 @@ function showQuizDone(){
   animateCount(document.getElementById('quiz-pct'), pct);
   document.getElementById('quiz-pct').textContent; // ensure visible before confetti
   setTimeout(()=>{ document.getElementById('quiz-pct').textContent = pct+'%'; }, 650);
-  document.getElementById('quiz-done-msg').textContent = pct>=80?'Mahtavaa! Amazing work! 🎉':pct>=60?'Keep it up! Jatka niin! 💪':'Practice makes perfect! 📚';
+  document.getElementById('quiz-done-msg').textContent = pct>=80?'Amazing work! 🎉':pct>=60?'Keep it up! 💪':'Practice makes progress! 📚';
   document.getElementById('quiz-done-sub').textContent = `${qCorrect} / ${qPool.length} correct`;
   if(pct >= 60) confetti();
+}
+
+/* ══════════════════════════════════════════════════════
+   AI STUDY LAB — adaptive recall + pronunciation scoring
+══════════════════════════════════════════════════════ */
+let smartSelection = null, smartShownAt = 0, smartRevealed = false;
+
+function initSmartLab(){
+  renderSmartDashboard();
+  if(!smartSelection) loadSmartWord();
+}
+
+function loadSmartWord(){
+  const previousKey = smartSelection ? adaptiveModel.key(smartSelection.word) : '';
+  smartSelection = adaptiveModel.recommendation(window.WORDS, previousKey);
+  if(!smartSelection) return;
+
+  const word = smartSelection.word;
+  document.getElementById('smart-ar').textContent = word.ar;
+  document.getElementById('smart-tr').textContent = word.tr || 'Pronunciation not available';
+  document.getElementById('smart-answer').textContent = '';
+  document.getElementById('smart-answer').classList.remove('visible');
+  document.getElementById('smart-reveal').style.display = '';
+  document.getElementById('smart-reason').textContent = smartSelection.reason;
+  document.getElementById('smart-actions').classList.remove('enabled');
+  document.getElementById('speech-target').textContent = word.ar;
+  setSpeechResult('—', 'Speech feedback will appear here.');
+  smartRevealed = false;
+  smartShownAt = Date.now();
+}
+
+function revealSmartAnswer(){
+  if(!smartSelection) return;
+  const answer = document.getElementById('smart-answer');
+  answer.textContent = smartSelection.word.en;
+  answer.classList.add('visible');
+  document.getElementById('smart-reveal').style.display = 'none';
+  document.getElementById('smart-actions').classList.add('enabled');
+  smartRevealed = true;
+}
+
+function rateSmartWord(quality){
+  if(!smartSelection || !smartRevealed) return;
+  adaptiveModel.record(smartSelection.word, quality, Date.now() - smartShownAt);
+  stats.learned += 1;
+  if(quality >= 2) stats.correct += 1;
+  saveStats();
+  renderSmartDashboard();
+
+  const card = document.getElementById('smart-card');
+  card.classList.remove('new-card');
+  void card.offsetWidth;
+  card.classList.add('new-card');
+  setTimeout(loadSmartWord, 180);
+}
+
+function speakSmartWord(){
+  if(smartSelection) speak(smartSelection.word.ar);
+}
+
+function renderSmartDashboard(){
+  const dashboard = adaptiveModel.dashboard(window.WORDS);
+  document.getElementById('ml-recall').textContent = dashboard.recall === null ? '—' : `${Math.round(dashboard.recall * 100)}%`;
+  document.getElementById('ml-signals').textContent = dashboard.signals;
+  document.getElementById('ml-due').textContent = dashboard.due;
+  document.getElementById('ml-confidence').textContent = dashboard.confidence;
+  const status = document.getElementById('model-status');
+  status.classList.toggle('ready', dashboard.signals >= 10);
+  status.lastChild.textContent = dashboard.signals >= 10 ? ' Personalized' : ' Calibrating';
+}
+
+function startPronunciationCheck(){
+  if(!smartSelection) return;
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!Recognition){
+    setSpeechResult('N/A', 'Live speech recognition is not supported here. Try the latest Chrome or Edge.');
+    return;
+  }
+
+  const recognition = new Recognition();
+  const button = document.getElementById('record-button');
+  const label = document.getElementById('record-label');
+  recognition.lang = 'ar-SA';
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 3;
+
+  recognition.onstart = function(){
+    button.classList.add('listening');
+    button.disabled = true;
+    label.textContent = 'Listening…';
+    setSpeechResult('…', 'Say the target word clearly.');
+  };
+  recognition.onresult = function(event){
+    const alternatives = Array.from(event.results[0]);
+    const target = smartSelection.word.ar;
+    const ranked = alternatives.map(result => ({
+      transcript:result.transcript,
+      score:pronunciationSimilarity(target, result.transcript),
+      confidence:result.confidence || 0
+    })).sort((a,b) => b.score - a.score);
+    const best = ranked[0];
+    const percent = Math.round(best.score * 100);
+    const message = percent >= 88
+      ? `Excellent match: “${best.transcript}”. Your pronunciation was recognized clearly.`
+      : percent >= 68
+        ? `Close match: “${best.transcript}”. Listen once more and focus on the full word.`
+        : `Heard “${best.transcript}”. Try again slowly after playing the reference audio.`;
+    setSpeechResult(`${percent}%`, message);
+  };
+  recognition.onerror = function(event){
+    const message = event.error === 'not-allowed'
+      ? 'Microphone access was blocked. Allow it in the browser to use pronunciation feedback.'
+      : 'I could not hear a clear result. Please try again in a quieter space.';
+    setSpeechResult('—', message);
+  };
+  recognition.onend = function(){
+    button.classList.remove('listening');
+    button.disabled = false;
+    label.textContent = 'Start pronunciation check';
+  };
+  recognition.start();
+}
+
+function normalizeArabic(value){
+  return (value || '')
+    .normalize('NFKD')
+    .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '')
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ة/g, 'ه')
+    .replace(/ؤ/g, 'و')
+    .replace(/ئ/g, 'ي')
+    .replace(/ـ/g, '')
+    .replace(/[^\u0621-\u064A\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function pronunciationSimilarity(target, heard){
+  const a = normalizeArabic(target);
+  const b = normalizeArabic(heard);
+  if(!a || !b) return 0;
+  const rows = Array.from({length:a.length + 1}, (_, i) => [i]);
+  for(let j=0; j<=b.length; j++) rows[0][j] = j;
+  for(let i=1; i<=a.length; i++){
+    for(let j=1; j<=b.length; j++){
+      rows[i][j] = Math.min(
+        rows[i-1][j] + 1,
+        rows[i][j-1] + 1,
+        rows[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1)
+      );
+    }
+  }
+  return Math.max(0, 1 - rows[a.length][b.length] / Math.max(a.length, b.length));
+}
+
+function setSpeechResult(score, message){
+  const result = document.getElementById('speech-result');
+  result.querySelector('.speech-score').textContent = score;
+  result.querySelector('p').textContent = message;
 }
 
 /* ── UTILITY ── */
@@ -565,4 +722,4 @@ function shuffle(a){
 }
 
 /* ── INIT ── */
-renderHome();
+showPage(location.hash.slice(1) || 'home', false);
